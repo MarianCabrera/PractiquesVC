@@ -1,0 +1,18 @@
+Per poder calcular la velocitat d'un objecte, primer necessitem saber la distància
+que ha recorregut aquest objecte, i el temps que ha trigat l'objecte per a recórrer
+aquest espai.
+
+Per una part, podem calcular l'espai recorregut utilitzant com a punts de referència
+les línies blanques de separació de carrils. La línia més propera a la imatge ocupa
+17 píxels dins la imatge, i l'espai entre línies més proper ocupa 39 píxels. També
+sabem que a la imatge apareixen 15 línies discontínues. Podem fer la deducció que
+la carretera és una autopista, per la qual cosa les línies discontínues (a Espanya) són de
+5 metres de llargada, separades entre elles per 10 metres. El total de recorregut entre
+la línia més propera de la imatge, i la més llunyana és de
+15 línies * 5 metres + 14 espais * 10 metres = 215 metres.
+
+El temps que triga a recórrer un cotxe aquest espai de carretera està determinat pel 
+número de frames per segon (fps) que s'utilitza en el vídeo. Suposant que el vídeo
+estigués gravat a 30 fps, un cotxe que travessa l'última línia visible en la imatge i
+que 300 frames després travessa la primera línia visible, estaria viatjant a una
+velocitat de 25 m/s = 90 km/h.
