@@ -26,21 +26,27 @@ for i in files[1050:1200]:
     fname = path + i
     train.append(skimage.io.imread(fname, as_gray=True))
     
-for i in files[1200:1350]:
+print(np.array(train).shape)
+    
+for i in files[1201:1351]:
     fname = path + i
     test.append(skimage.io.imread(fname, as_gray=True))
+print(np.array(test).shape)
     
 # Tasca 2 - Calcular la mitjana i desviació
 # estàndard [+ 0.5]
 
 m = np.mean(train, 0)
+plt.imshow(m,'gray')
 std = np.std(train, 0)
+print(m.dtype)
+plt.imshow(std,'gray')
 
 #  Tasca 3 - Segmentar cotxes restant el model
 # de fons [+ 1.0]
 
 segmentacio = []
-thr = 0.4
+thr = 0.2
 
 for i in range(150):
     img = np.abs(test[i] - m)
@@ -60,13 +66,22 @@ for i in range(150):
     img = np.abs(test[i] - m)
     segmentacio_elaborada.append((img > thr).astype(np.uint8))
     
+plt.imshow(segmentacio_elaborada[20],'gray')
+    
 # Tasca 5 - Gravar un vídeo amb els resultats
 # [+ 2.0]
 
-frameSize = (240, 320)
-video = cv2.VideoWriter('lab1VideoPython.avi', cv2.VideoWriter_fourcc(*'DIVX'), 60, frameSize)
-for i in segmentacio_elaborada:
-    video.write(i)
+height = 240
+width = 320
+
+fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
+fps = 30
+video = cv2.VideoWriter('lab1VideoPython.avi', fourcc, fps, (width, height))
+
+for i in range(150):
+    image2video  = cv2.normalize(segmentacio_elaborada[i], None, 255, 0, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    image2video3c = cv2.merge([image2video, image2video, image2video])
+    video.write(image2video3c)
 video.release()
 
 #os.mkdir('segmentacio')
@@ -83,7 +98,8 @@ video.release()
 #    img = skimage.io.imread('segmentacio_elaborada/img' + str(i) + '.jpg', as_gray=True)
 #    video.write(img)
 #video.release()
-    
+
+
 # Tasca 6 - Avalua la bondat dels teus resultats [+ 1.0]
    
 path = "highway/groundtruth/"
