@@ -65,7 +65,7 @@ groundGroup(:,:,:) = groundGroup(:,:,:) > 0;
 
 errorScore = 0;
 for i = 1:150
-    compGroup = cat(3,groundGroup(:,:,1), resultV2(:,:,1));
+    compGroup = cat(3,groundGroup(:,:,i), resultV2(:,:,i));
     score = std(compGroup,0,3);
     errorScore = errorScore + sum(score, 'all');
 end
@@ -92,9 +92,3 @@ errorScore = errorScore / 150
 %         end
 %     end
 % end
-% bestA
-% bestB
-% errorScore
-
-newA = 0.13;
-newB = 0.16;
