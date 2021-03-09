@@ -3,7 +3,7 @@ que ha recorregut aquest objecte, i el temps que ha trigat l'objecte per a recó
 aquest espai.
 
 Per una part, podem calcular l'espai recorregut utilitzant com a punts de referència
-les línies blanques de separació de carrils. La línia més propera a la imatge ocupa
+les línies blanques de separació de carrils. La línia més propera a la imatge té de llargada
 17 píxels dins la imatge, i l'espai entre línies més proper ocupa 39 píxels. També
 sabem que a la imatge apareixen 15 línies discontínues. Podem fer la deducció que
 la carretera és una autopista, per la qual cosa les línies discontínues (a Espanya) són de
