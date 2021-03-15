@@ -5,38 +5,60 @@ from scipy import signal
 from skimage.registration import phase_cross_correlation
 
 
+def getCenteredImages(reference, image):
+    convRef = signal.fftconvolve(reference, reference, mode='same')
+    centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
+    
+    conv = signal.fftconvolve(reference, image, mode='same')
+    center = np.unravel_index(np.argmax(conv), conv.shape)
+    
+    diff = [centerRef[0] - center[0], centerRef[1] - center[1]]
+    print(reference.shape)
+    print(diff)
+    
+    new = np.zeros((reference.shape[0], reference.shape[0]), dtype=float)
+    if diff[0]>=0:
+        if diff[1]>=0:
+            new[diff[0]:, diff[1]:] = images[0:940-diff[0],0:940-diff[1],1]
+
+
+
+
+    return new
+
+###############################################################################
+
 imgGray = cv2.imread('img/jhinGray.jpg', cv2.IMREAD_GRAYSCALE)
 
 size = (640, 640)
 
 color = [0, 0, 0]
-imgGrayR = cv2.copyMakeBorder(imgGray, 150, 150, 150, 150, cv2.BORDER_CONSTANT, value=color)
-imgGrayG = cv2.copyMakeBorder(imgGray, 0, 300, 0, 300, cv2.BORDER_CONSTANT, value=color)
-imgGrayB = cv2.copyMakeBorder(imgGray, 200, 100, 300, 0, cv2.BORDER_CONSTANT, value=color)
 
-images = np.zeros((imgGrayR.shape[0], imgGrayR.shape[0], 3 ), dtype=float)
-images[:,:,0] = imgGrayR
-images[:,:,1] = imgGrayG
-images[:,:,2] = imgGrayB
+imgCenter = cv2.copyMakeBorder(imgGray, 150, 150, 150, 150, cv2.BORDER_CONSTANT, value=color)
+imgTopLeft = cv2.copyMakeBorder(imgGray, 0, 300, 0, 300, cv2.BORDER_CONSTANT, value=color)
+imgTopRight = cv2.copyMakeBorder(imgGray, 0, 300, 300, 0, cv2.BORDER_CONSTANT, value=color)
+imgBotLeft = cv2.copyMakeBorder(imgGray, 300, 0, 0, 300, cv2.BORDER_CONSTANT, value=color)
+imgBotRight = cv2.copyMakeBorder(imgGray, 300, 0, 300, 0, cv2.BORDER_CONSTANT, value=color)
 
-images[:,:,0] -= np.mean(images[:,:,0])
-images[:,:,1] -= np.mean(images[:,:,1])
-images[:,:,2] -= np.mean(images[:,:,2])
+images = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 5 ), dtype=float)
+images[:,:,0] = imgCenter
+images[:,:,1] = imgTopLeft
+images[:,:,2] = imgTopRight
+images[:,:,3] = imgBotLeft
+images[:,:,4] = imgBotRight
 
+newImages = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 3 ), dtype=float)
+newImages[:,:,1] = images[:,:,0]
+newImages[:,:,1] = getCenteredImages(images[:,:,0], images[:,:,1])
+newImages[:,:,2] = getCenteredImages(images[:,:,0], images[:,:,2])
 
-conv1 = signal.fftconvolve(images[:,:,0], images[:,:,0], mode='same')
-conv2 = signal.fftconvolve(images[:,:,0], images[:,:,1], mode='same')
-conv3 = signal.fftconvolve(images[:,:,0], images[:,:,2], mode='same')
-
-center1 = np.unravel_index(np.argmax(conv1), conv1.shape)
-center2 = np.unravel_index(np.argmax(conv2), conv2.shape)
-center3 = np.unravel_index(np.argmax(conv3), conv3.shape)
-print(center1)
-print(center2)
-print(center3)
-
-diff1 = [center1[0] - center2[0], center1[1] - center2[1]]
-print(diff1)
-
-
-#plt.imshow(conv1,'gray')
+plt.figure(1)
+plt.imshow(images[:,:,0],'gray')
+plt.figure(2)
+plt.imshow(images[:,:,1],'gray')
+plt.figure(3)
+plt.imshow(images[:,:,2],'gray')
+plt.figure(4)
+plt.imshow(images[:,:,3],'gray')
+plt.figure(5)
+plt.imshow(images[:,:,4],'gray')
