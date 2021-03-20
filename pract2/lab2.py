@@ -2,23 +2,78 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import signal
-from skimage.registration import phase_cross_correlation
+import skimage.io
 
 
-def getCenteredImages(reference, image):
+#scipy.signal.convolve2d()
+def getFFTconv(reference, image):
     convRef = signal.fftconvolve(reference, reference, mode='same')
     centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
     
+    
+    #conv = signal.fftconvolve(reference, image[::-1,::-1], mode='same')
     conv = signal.fftconvolve(reference, image, mode='same')
     center = np.unravel_index(np.argmax(conv), conv.shape)
     
     diff = [centerRef[0] - center[0], centerRef[1] - center[1]]
-    print(diff)
+    # print(diff)
     
     new = np.roll(image,diff[0],axis=0)
     new = np.roll(new,diff[1],axis=1)
 
     return new
+
+def getCrossCorr(reference, image):
+    corrRef = signal.correlate2d(reference, reference, mode='same')
+    yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
+    
+    corr = signal.correlate2d(reference, image, mode='same')
+    y, x = np.unravel_index(np.argmax(corr), corr.shape)
+    print(yRef,xRef)
+    print(y,x)
+    new = np.roll(image,(xRef-x),axis=1)
+    new = np.roll(new,(yRef-y),axis=0)
+    
+    return new
+
+def alignImages(ref, im2, im3, alignType):
+    
+    shape = ref.shape
+    
+    result = np.zeros((shape[0],shape[1],3))
+    
+    if alignType == 0:
+        result[:,:,0] = ref
+        result[:,:,1] = getFFTconv(ref, im2)
+        result[:,:,2] = getFFTconv(ref, im3)
+    elif alignType == 1:
+        result[:,:,0] = ref
+        result[:,:,1] = getCrossCorr(ref, im2)
+        # result[:,:,2] = getCrossCorr(ref, im3)
+    
+    return result
+
+def getConv(reference, image):
+    
+    newScale = (int(reference.shape[1]/4),int(reference.shape[0]/4))
+    referenceResized = cv2.resize(reference, dsize=newScale, interpolation=cv2.INTER_CUBIC)
+    imageResized = cv2.resize(image, dsize=newScale, interpolation=cv2.INTER_CUBIC)
+    
+    convReference = signal.convolve2d(referenceResized, referenceResized[::-1,::-1],mode='same')
+    centerReference = np.unravel_index(np.argmax(convReference), convReference.shape)
+    
+    conv = signal.convolve2d(referenceResized, imageResized[::-1,::-1],mode='same')
+    center = np.unravel_index(np.argmax(conv), conv.shape)
+    
+    
+    diffX = (centerReference[0] - center[0] ) * 4
+    new = np.roll(image,diffX,axis=0)
+    diffY = (centerReference[1] - center[1] ) * 4
+    new = np.roll(new,diffY,axis=1)
+    
+    
+    return new
+    
 
 ###############################################################################
 
@@ -28,35 +83,102 @@ size = (640, 640)
 
 color = [0, 0, 0]
 
-imgCenter = cv2.copyMakeBorder(imgGray, 150, 150, 150, 150, cv2.BORDER_CONSTANT, value=color)
-imgTopLeft = cv2.copyMakeBorder(imgGray, 0, 300, 0, 300, cv2.BORDER_CONSTANT, value=color)
-imgTopRight = cv2.copyMakeBorder(imgGray, 0, 300, 300, 0, cv2.BORDER_CONSTANT, value=color)
-imgBotLeft = cv2.copyMakeBorder(imgGray, 300, 0, 0, 300, cv2.BORDER_CONSTANT, value=color)
-imgBotRight = cv2.copyMakeBorder(imgGray, 300, 0, 300, 0, cv2.BORDER_CONSTANT, value=color)
+imgCenter = cv2.copyMakeBorder(imgGray, 15, 15, 15, 15, cv2.BORDER_CONSTANT, value=color)
+imgTopLeft = cv2.copyMakeBorder(imgGray, 0, 30, 0, 30, cv2.BORDER_CONSTANT, value=color)
+imgTopRight = cv2.copyMakeBorder(imgGray, 0, 30, 30, 0, cv2.BORDER_CONSTANT, value=color)
+imgBotLeft = cv2.copyMakeBorder(imgGray, 30, 0, 0, 30, cv2.BORDER_CONSTANT, value=color)
+imgBotRight = cv2.copyMakeBorder(imgGray, 30, 0, 30, 0, cv2.BORDER_CONSTANT, value=color)
 
-images = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 5 ), dtype=float)
-images[:,:,0] = imgCenter
-images[:,:,1] = imgTopLeft
-images[:,:,2] = imgTopRight
-images[:,:,3] = imgBotLeft
-images[:,:,4] = imgBotRight
+# images = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 5 ))
+# images[:,:,0] = imgCenter
+# images[:,:,1] = imgTopLeft
+# images[:,:,2] = imgTopRight
+# images[:,:,3] = imgBotLeft
+# images[:,:,4] = imgBotRight
 
-newImages = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 5 ), dtype=float)
-newImages[:,:,0] = images[:,:,0]
-newImages[:,:,1] = getCenteredImages(images[:,:,0], images[:,:,1])
-newImages[:,:,2] = getCenteredImages(images[:,:,0], images[:,:,2])
-newImages[:,:,3] = getCenteredImages(images[:,:,0], images[:,:,3])
-newImages[:,:,4] = getCenteredImages(images[:,:,0], images[:,:,4])
+# newImages = np.zeros((imgCenter.shape[0], imgCenter.shape[0], 5 ), dtype=float)
+# newImages[:,:,0] = images[:,:,0]
+# newImages[:,:,1] = getFFTconv(images[:,:,0], images[:,:,1])
+# newImages[:,:,2] = getFFTconv(images[:,:,0], images[:,:,2])
+# newImages[:,:,3] = getFFTconv(images[:,:,0], images[:,:,3])
+# newImages[:,:,4] = getFFTconv(images[:,:,0], images[:,:,4])
+
 
 ## TODO cut edges
 
-plt.figure(1)
-plt.imshow(images[:,:,0],'gray')
-plt.figure(2)
-plt.imshow(newImages[:,:,1],'gray')
-plt.figure(3)
-plt.imshow(newImages[:,:,2],'gray')
-plt.figure(4)
-plt.imshow(newImages[:,:,3],'gray')
-plt.figure(5)
-plt.imshow(newImages[:,:,4],'gray')
+# plt.figure(1)
+# plt.imshow(images[:,:,0],'gray')
+# plt.figure(2)
+# plt.imshow(images[:,:,1],'gray')
+# plt.figure(3)
+# plt.imshow(images[:,:,2],'gray')
+# plt.figure(4)
+# plt.imshow(images[:,:,3],'gray')
+# plt.figure(5)
+# plt.imshow(images[:,:,4],'gray')
+
+imgColor = skimage.io.imread('img/sonw.jpg')
+r = imgColor[:,:,0]
+g = imgColor[:,:,1]
+b = imgColor[:,:,2]
+
+r1 = cv2.copyMakeBorder(r, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value=color)
+g1 = cv2.copyMakeBorder(g, 0, 10, 0, 10, cv2.BORDER_CONSTANT, value=color)
+b1 = cv2.copyMakeBorder(b, 0, 10, 10, 0, cv2.BORDER_CONSTANT, value=color)
+
+# print(r.dtype)
+
+# plt.figure(6)
+# plt.imshow(r1,'gray')
+# plt.figure(7)
+# plt.imshow(g1,'gray')
+# plt.figure(10)
+# plt.imshow(b1,'gray')
+
+result = alignImages(r1, g1, b1, 1)
+
+plt.figure(8)
+plt.imshow(result.astype(np.uint8))
+
+# result = alignImages(r1, g1, b1, 1)
+
+# plt.figure(11)
+# plt.imshow(result.astype(np.uint8))
+
+
+# newScale = (int(r1.shape[1]/4),int(r1.shape[0]/4))
+# refRes = cv2.resize(r1, dsize=newScale, interpolation=cv2.INTER_CUBIC)
+# imgRes = cv2.resize(g1, dsize=newScale, interpolation=cv2.INTER_CUBIC)
+
+# plt.figure(7)
+# plt.imshow(r1,'gray')
+
+# convRef = signal.convolve2d(refRes, refRes[::-1,::-1],mode='same')
+# centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
+# conv = signal.convolve2d(refRes, imgRes[::-1,::-1],mode='same')
+# center = np.unravel_index(np.argmax(conv), conv.shape)
+
+# print(centerRef)
+# print(center)
+
+# diffX = -(centerRef[0] - center[0] ) * 4
+# new = np.roll(g1,diffX,axis=0)
+# diffY = -(centerRef[1] - center[1] ) * 4
+# new = np.roll(new,diffX,axis=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
