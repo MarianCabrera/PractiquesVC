@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -23,11 +24,36 @@ def getFFTconv(reference, image):
     return new
 
 def getCrossCorr(reference, image):
-    corr = signal.correlate2d(reference, image, mode='same')
+    referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
+    imageMean = image.astype(np.double) - image.mean().astype(np.double)
+    
+    corrRef = signal.correlate2d(referenceMean, referenceMean, boundary='symm', mode='same')
+    yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
+    
+    corr = signal.correlate2d(referenceMean, imageMean, boundary='symm', mode='same')
     y, x = np.unravel_index(np.argmax(corr), corr.shape)
     
-    new = np.roll(image,x,axis=0)
-    new = np.roll(new,y,axis=1)
+    print((xRef-x), (yRef-y))
+    new = np.roll(image,xRef-x,axis=1)
+    new = np.roll(new,yRef-y,axis=0)
+    
+    fig, (ax_orig, ax_template, ax_corr, ax_result) = plt.subplots(4, 1, figsize=(6, 15))
+    ax_orig.imshow(reference, cmap='gray')
+    ax_orig.set_title('Original')
+    ax_orig.set_axis_off()
+    ax_template.imshow(image, cmap='gray')
+    ax_template.set_title('Template') 
+    ax_template.set_axis_off() 
+    ax_corr.imshow(corr, cmap='gray') 
+    ax_corr.set_title('Cross-correlation') 
+    ax_corr.set_axis_off() 
+    ax_orig.plot(x, y, 'ro')
+    ax_orig.plot(xRef, yRef, 'ro') 
+    ax_result.imshow(new, cmap='gray')
+    ax_result.set_title('result') 
+    ax_result.set_axis_off() 
+    
+    fig.show()
     
     return new
 
@@ -45,26 +71,38 @@ def alignImages(ref, im2, im3, alignType):
     
     return result
 
+def saveImg(img, name):
+    n = os.path.splitext(name)[0] + "_color.png"
+    cv2.imwrite(n, img)
+    return 0
+
 # ----------------------------------------------------------------------------
 
-test1 = cv2.imread('img/test1.jpg', cv2.IMREAD_GRAYSCALE)
 
-plt.figure(1)
-plt.imshow(test1,'gray')
+name = 'img/test1.jpg'
+test1 = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
+
+# plt.figure(1)
+# plt.imshow(test1,'gray')
 
 test1_R, test1_G, test1_B = cut(test1)
+test1_R = test1_R.astype(np.double)
+test1_G = test1_G.astype(np.double)
+test1_B = test1_B.astype(np.double)
 
-plt.figure(2)
-plt.imshow(test1_R,'gray')
-plt.figure(3)
-plt.imshow(test1_G,'gray')
-plt.figure(4)
-plt.imshow(test1_B,'gray')
+# plt.figure(2)
+# plt.imshow(test1_R,'gray')
+# plt.figure(3)
+# plt.imshow(test1_G,'gray')
+# plt.figure(4)
+# plt.imshow(test1_B,'gray')
 
 result_test1 = alignImages(test1_R, test1_G, test1_B, 1)
 
-plt.figure(5)
+plt.figure(10)
 plt.imshow(result_test1.astype(np.uint8))
+
+saveImg(result_test1, name)
 
 
 
