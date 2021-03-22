@@ -13,9 +13,13 @@ def cut(img):
     return img_3_1, img_3_2, img_3_3
 
 def getFFTconv(reference, image):
-    convRef = signal.fftconvolve(reference, reference[::-1,::-1], mode='same')
+    
+    referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
+    imageMean = image.astype(np.double) - image.mean().astype(np.double)
+    
+    convRef = signal.fftconvolve(referenceMean, referenceMean[::-1,::-1], mode='same')
     centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
-    conv = signal.fftconvolve(reference, image[::-1,::-1], mode='same')
+    conv = signal.fftconvolve(referenceMean, imageMean[::-1,::-1], mode='same')
     center = np.unravel_index(np.argmax(conv), conv.shape)
     diff = [center[0] - centerRef[0], center[1] - centerRef[1]]
     new = np.roll(image,diff[0],axis=0)
@@ -32,27 +36,26 @@ def getCrossCorr(reference, image):
     corr = signal.correlate2d(referenceMean, imageMean, boundary='symm', mode='same')
     y, x = np.unravel_index(np.argmax(corr), corr.shape)
     
-    print((xRef-x), (yRef-y))
-    new = np.roll(image,xRef-x,axis=1)
-    new = np.roll(new,yRef-y,axis=0)
+    new = np.roll(image,x-xRef,axis=1)
+    new = np.roll(new,y-yRef,axis=0)
     
-    fig, (ax_orig, ax_template, ax_corr, ax_result) = plt.subplots(4, 1, figsize=(6, 15))
-    ax_orig.imshow(reference, cmap='gray')
-    ax_orig.set_title('Original')
-    ax_orig.set_axis_off()
-    ax_template.imshow(image, cmap='gray')
-    ax_template.set_title('Template') 
-    ax_template.set_axis_off() 
-    ax_corr.imshow(corr, cmap='gray') 
-    ax_corr.set_title('Cross-correlation') 
-    ax_corr.set_axis_off() 
-    ax_orig.plot(x, y, 'ro')
-    ax_orig.plot(xRef, yRef, 'ro') 
-    ax_result.imshow(new, cmap='gray')
-    ax_result.set_title('result') 
-    ax_result.set_axis_off() 
+    # fig, (ax_orig, ax_template, ax_corr, ax_result) = plt.subplots(4, 1, figsize=(6, 15))
+    # ax_orig.imshow(reference, cmap='gray')
+    # ax_orig.set_title('Original')
+    # ax_orig.set_axis_off()
+    # ax_template.imshow(image, cmap='gray')
+    # ax_template.set_title('Template') 
+    # ax_template.set_axis_off() 
+    # ax_corr.imshow(corr, cmap='gray') 
+    # ax_corr.set_title('Cross-correlation') 
+    # ax_corr.set_axis_off() 
+    # ax_orig.plot(x, y, 'ro')
+    # ax_orig.plot(xRef, yRef, 'ro') 
+    # ax_result.imshow(new, cmap='gray')
+    # ax_result.set_title('result') 
+    # ax_result.set_axis_off() 
     
-    fig.show()
+    # fig.show()
     
     return new
 

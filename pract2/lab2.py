@@ -16,17 +16,51 @@ def getFFTconv(reference, image):
     return new
 
 def getCrossCorr(reference, image):
-    corrRef = signal.correlate2d(reference, reference, mode='same')
+    referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
+    imageMean = image.astype(np.double) - image.mean().astype(np.double)
+    
+    corrRef = signal.correlate2d(referenceMean, referenceMean, boundary='symm', mode='same')
     yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
     
-    corr = signal.correlate2d(reference, image, mode='same')
+    corr = signal.correlate2d(referenceMean, imageMean, boundary='symm', mode='same')
     y, x = np.unravel_index(np.argmax(corr), corr.shape)
-    print(yRef,xRef)
-    print(y,x)
-    new = np.roll(image,(xRef-x),axis=1)
-    new = np.roll(new,(yRef-y),axis=0)
+    
+    print((x-xRef), (y-yRef))
+    new = np.roll(image,x-xRef,axis=1)
+    new = np.roll(new,y-yRef,axis=0)
+    
+    fig, (ax_orig, ax_template, ax_corr, ax_result) = plt.subplots(4, 1, figsize=(6, 15))
+    ax_orig.imshow(reference, cmap='gray')
+    ax_orig.set_title('Original')
+    ax_orig.set_axis_off()
+    ax_template.imshow(image, cmap='gray')
+    ax_template.set_title('Template') 
+    ax_template.set_axis_off() 
+    ax_corr.imshow(corr, cmap='gray') 
+    ax_corr.set_title('Cross-correlation') 
+    ax_corr.set_axis_off() 
+    ax_orig.plot(x, y, 'ro')
+    ax_orig.plot(xRef, yRef, 'ro') 
+    ax_result.imshow(new, cmap='gray')
+    ax_result.set_title('result') 
+    ax_result.set_axis_off() 
+    
+    fig.show()
     
     return new
+
+# def getCrossCorr(reference, image):
+#     corrRef = signal.correlate2d(reference, reference, mode='same')
+#     yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
+    
+#     corr = signal.correlate2d(reference, image, mode='same')
+#     y, x = np.unravel_index(np.argmax(corr), corr.shape)
+#     print(yRef,xRef)
+#     print(y,x)
+#     new = np.roll(image,(xRef-x),axis=1)
+#     new = np.roll(new,(yRef-y),axis=0)
+    
+#     return new
 
 def alignImages(ref, im2, im3, alignType):
     
@@ -41,7 +75,7 @@ def alignImages(ref, im2, im3, alignType):
     elif alignType == 1:
         result[:,:,0] = ref
         result[:,:,1] = getCrossCorr(ref, im2)
-        # result[:,:,2] = getCrossCorr(ref, im3)
+        result[:,:,2] = getCrossCorr(ref, im3)
     
     return result
 
@@ -133,7 +167,7 @@ plt.imshow(g2,'gray')
 plt.figure(5)
 plt.imshow(b2,'gray')
 
-result = alignImages(r1, g2, b2, 0)
+result = alignImages(r1, g1, b1, 1)
 
 plt.figure(8)
 plt.imshow(result.astype(np.uint8))
