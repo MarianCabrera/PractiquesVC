@@ -49,18 +49,20 @@ def getCrossCorr(reference, image):
     
     return new
 
-# def getCrossCorr(reference, image):
-#     corrRef = signal.correlate2d(reference, reference, mode='same')
-#     yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
+def getCorr(reference, image):
+    referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
+    imageMean = image.astype(np.double) - image.mean().astype(np.double)
     
-#     corr = signal.correlate2d(reference, image, mode='same')
-#     y, x = np.unravel_index(np.argmax(corr), corr.shape)
-#     print(yRef,xRef)
-#     print(y,x)
-#     new = np.roll(image,(xRef-x),axis=1)
-#     new = np.roll(new,(yRef-y),axis=0)
+    corrRef = signal.convolve2d(referenceMean, referenceMean[::-1,::-1], boundary='symm', mode='same')
+    yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
     
-#     return new
+    corr = signal.convolve2d(referenceMean, imageMean[::-1,::-1], boundary='symm', mode='same')
+    y, x = np.unravel_index(np.argmax(corr), corr.shape)
+    
+    new = np.roll(image,x-xRef,axis=1)
+    new = np.roll(new,y-yRef,axis=0)
+    
+    return new
 
 def alignImages(ref, im2, im3, alignType):
     
@@ -76,7 +78,11 @@ def alignImages(ref, im2, im3, alignType):
         result[:,:,0] = ref
         result[:,:,1] = getCrossCorr(ref, im2)
         result[:,:,2] = getCrossCorr(ref, im3)
-    
+    elif alignType == 2:
+        result[:,:,0] = ref
+        result[:,:,1] = getCorr(ref, im2)
+        result[:,:,2] = getCorr(ref, im3)
+        
     return result
 
 def getConv(reference, image):
@@ -167,7 +173,7 @@ plt.imshow(g2,'gray')
 plt.figure(5)
 plt.imshow(b2,'gray')
 
-result = alignImages(r1, g1, b1, 1)
+result = alignImages(r1, g1, b1, 2)
 
 plt.figure(8)
 plt.imshow(result.astype(np.uint8))

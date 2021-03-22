@@ -13,7 +13,6 @@ def cut(img):
     return img_3_1, img_3_2, img_3_3
 
 def getFFTconv(reference, image):
-    
     referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
     imageMean = image.astype(np.double) - image.mean().astype(np.double)
     
@@ -59,6 +58,21 @@ def getCrossCorr(reference, image):
     
     return new
 
+def getCorr(reference, image):
+    referenceMean = reference.astype(np.double) - reference.mean().astype(np.double) 
+    imageMean = image.astype(np.double) - image.mean().astype(np.double)
+    
+    corrRef = signal.convolve2d(referenceMean, referenceMean[::-1,::-1], boundary='symm', mode='same')
+    yRef, xRef = np.unravel_index(np.argmax(corrRef), corrRef.shape)
+    
+    corr = signal.convolve2d(referenceMean, imageMean[::-1,::-1], boundary='symm', mode='same')
+    y, x = np.unravel_index(np.argmax(corr), corr.shape)
+    
+    new = np.roll(image,x-xRef,axis=1)
+    new = np.roll(new,y-yRef,axis=0)
+    
+    return new
+
 def alignImages(ref, im2, im3, alignType):
     shape = ref.shape
     result = np.zeros((shape[0],shape[1],3))
@@ -70,6 +84,11 @@ def alignImages(ref, im2, im3, alignType):
         result[:,:,0] = ref
         result[:,:,1] = getCrossCorr(ref, im2)
         result[:,:,2] = getCrossCorr(ref, im3)
+    elif alignType == 2:
+        result[:,:,0] = ref
+        result[:,:,1] = getCorr(ref, im2)
+        result[:,:,2] = getCorr(ref, im3)
+        
     
     return result
 
@@ -99,7 +118,7 @@ test1_B = test1_B.astype(np.double)
 # plt.figure(4)
 # plt.imshow(test1_B,'gray')
 
-result_test1 = alignImages(test1_R, test1_G, test1_B, 1)
+result_test1 = alignImages(test1_R, test1_G, test1_B, 2)
 
 plt.figure(10)
 plt.imshow(result_test1.astype(np.uint8))
