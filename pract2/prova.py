@@ -39,4 +39,4 @@ new_img[:,:,1] = img_3_2
 new_img[:,:,2] = img_3_3
 
 plt.figure(6)
-plt.imshow(new_img, 'gray')
+plt.imshow(new_img)
