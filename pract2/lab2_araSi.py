@@ -85,53 +85,22 @@ def saveImg(img, name, extension):
 
 # ----------------------------------------------------------------------------
 
-
-path = "img/"
-imageSet = "p"
-numberImgs = 4
+# path = "img/problemes/"
+# imageSet = "p"
+path = "img/set/"
+imageSet = "s"
 extension = ".jpg"
 alignType = 0
 
-for i in range(1,numberImgs+1):
+files = os.listdir(path)
+
+for i in range(1,len(files)):
     name = path + imageSet + str(i) + extension
     img =  cv2.imread(name, cv2.IMREAD_GRAYSCALE)
     r, g, b = cut(img)
     result = alignImages(r,g,b,alignType, name)
-    saveImg(result, path + imageSet + str(i), extension)
-    # result.append(alignImages(r,g,b,alignType))
-    
-# plt.figure(1)
-# plt.imshow(result[0].astype(np.uint8),'gray')
-
-
-
-
-
-# name = 'img/test1.jpg'
-# test1 = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
-
-
-
-# test1_R, test1_G, test1_B = cut(test1)
-# test1_R = test1_R.astype(np.double)
-# test1_G = test1_G.astype(np.double)
-# test1_B = test1_B.astype(np.double)
-
-# # plt.figure(2)
-# # plt.imshow(test1_R,'gray')
-# # plt.figure(3)
-# # plt.imshow(test1_G,'gray')
-# # plt.figure(4)
-# # plt.imshow(test1_B,'gray')
-
-# result_test1 = alignImages(test1_R, test1_G, test1_B, 0)
-
-# plt.figure(10)
-# plt.imshow(result_test1.astype(np.uint8))
-
-# saveImg(result_test1, name)
-
-
-
+    saveImg(result, path + "results/"+ imageSet + str(i), extension)
+    plt.figure(i)
+    plt.imshow(result.astype(np.uint8))
 
 
