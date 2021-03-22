@@ -5,22 +5,14 @@ from scipy import signal
 import skimage.io
 
 
-#scipy.signal.convolve2d()
 def getFFTconv(reference, image):
-    convRef = signal.fftconvolve(reference, reference, mode='same')
+    convRef = signal.fftconvolve(reference, reference[::-1,::-1], mode='same')
     centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
-    
-    
-    #conv = signal.fftconvolve(reference, image[::-1,::-1], mode='same')
-    conv = signal.fftconvolve(reference, image, mode='same')
+    conv = signal.fftconvolve(reference, image[::-1,::-1], mode='same')
     center = np.unravel_index(np.argmax(conv), conv.shape)
-    
-    diff = [centerRef[0] - center[0], centerRef[1] - center[1]]
-    # print(diff)
-    
+    diff = [center[0] - centerRef[0], center[1] - centerRef[1]]
     new = np.roll(image,diff[0],axis=0)
     new = np.roll(new,diff[1],axis=1)
-
     return new
 
 def getCrossCorr(reference, image):
@@ -125,17 +117,23 @@ b = imgColor[:,:,2]
 r1 = cv2.copyMakeBorder(r, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value=color)
 g1 = cv2.copyMakeBorder(g, 0, 10, 0, 10, cv2.BORDER_CONSTANT, value=color)
 b1 = cv2.copyMakeBorder(b, 0, 10, 10, 0, cv2.BORDER_CONSTANT, value=color)
+g2 = cv2.copyMakeBorder(g, 10, 0, 0, 10, cv2.BORDER_CONSTANT, value=color)
+b2 = cv2.copyMakeBorder(b, 10, 0, 10, 0, cv2.BORDER_CONSTANT, value=color)
 
 # print(r.dtype)
 
-# plt.figure(6)
-# plt.imshow(r1,'gray')
-# plt.figure(7)
-# plt.imshow(g1,'gray')
-# plt.figure(10)
-# plt.imshow(b1,'gray')
+plt.figure(1)
+plt.imshow(r1,'gray')
+plt.figure(2)
+plt.imshow(g1,'gray')
+plt.figure(3)
+plt.imshow(b1,'gray')
+plt.figure(4)
+plt.imshow(g2,'gray')
+plt.figure(5)
+plt.imshow(b2,'gray')
 
-result = alignImages(r1, g1, b1, 1)
+result = alignImages(r1, g2, b2, 0)
 
 plt.figure(8)
 plt.imshow(result.astype(np.uint8))

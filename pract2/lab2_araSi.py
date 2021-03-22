@@ -17,10 +17,9 @@ def getFFTconv(reference, image):
     centerRef = np.unravel_index(np.argmax(convRef), convRef.shape)
     conv = signal.fftconvolve(reference, image[::-1,::-1], mode='same')
     center = np.unravel_index(np.argmax(conv), conv.shape)
-    diff = [centerRef[0] - center[0], centerRef[1] - center[1]]
+    diff = [center[0] - centerRef[0], center[1] - centerRef[1]]
     new = np.roll(image,diff[0],axis=0)
     new = np.roll(new,diff[1],axis=1)
-
     return new
 
 def getCrossCorr(reference, image):
