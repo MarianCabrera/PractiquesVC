@@ -57,6 +57,15 @@ def getCorr(reference, image):
     
     return new
 
+def getFourierPhase(reference, image): 
+    return 0
+
+def processEdges(image):
+    return 0
+
+def removeNoise(image):
+    return 0
+    
 def alignImages(ref, im2, im3, alignType, name):
     shape = ref.shape
     result = np.zeros((shape[0],shape[1],3))
