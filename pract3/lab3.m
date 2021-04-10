@@ -30,24 +30,24 @@ function p = applyDLT(x, y, H)
 end
 
 function imOut = generateLargeImg(imL, im, imR, nPoints)
-predef_xL = [1562 2243 2219 1568];
-predef_yL = [1163 1256 710 716];
-predef_xCL = [641 1304 1289 650];
-predef_yCL = [1160 1265 722 713];
-predef_xR = [233 926 935 223];
-predef_yR = [1277 1430 791 707];
-predef_xCR = [1307 1979 1973 1286];
-predef_yCR = [1277 1424 779 716];
+% predef_xL = [1562 2243 2219 1568];
+% predef_yL = [1163 1256 710 716];
+% predef_xCL = [641 1304 1289 650];
+% predef_yCL = [1160 1265 722 713];
+% predef_xR = [233 926 935 223];
+% predef_yR = [1277 1430 791 707];
+% predef_xCR = [1307 1979 1973 1286];
+% predef_yCR = [1277 1424 779 716];
 
-%     [xL, yL] = getPointsImage(imL, nPoints, 1);
-%     [xCL, yCL] = getPointsImage(im, nPoints, 2);
-%     hL = getDLT(xL, yL, xCL, yCL);
-    hL = getDLT(predef_xL, predef_yL, predef_xCL, predef_yCL);
+    [xL, yL] = getPointsImage(imL, nPoints, 1);
+    [xCL, yCL] = getPointsImage(im, nPoints, 2);
+    hL = getDLT(xL, yL, xCL, yCL);
+%     hL = getDLT(predef_xL, predef_yL, predef_xCL, predef_yCL);
 
 %     [xR, yR] = getPointsImage(imR, nPoints, 3)
 %     [xCR, yCR] = getPointsImage(im, nPoints, 4)
 %     hR = getDLT(xR, yR, xCR, yCR);
-    hR = getDLT(predef_xR, predef_yR, predef_xCR, predef_yCR);
+%     hR = getDLT(predef_xR, predef_yR, predef_xCR, predef_yCR);
     close all,
     
     s = size(im);
@@ -79,29 +79,41 @@ predef_yCR = [1277 1424 779 716];
     
     sizeY = maxY - minY;
     sizeX = maxX - minX;
-    imOut = zeros(int32(sizeY), int32(sizeX),3);
+    imOut = zeros(int32(sizeY), int32(sizeX), 3);
+    imOutPlus = zeros(int32(sizeY), int32(sizeX));
     imOut(int32(0-minY+1): int32(s(1)+(0-minY)), int32(0-minX+1): int32(s(2)+(0-minX)), :) = im;
     
     invHL = inv(hL);
     invHR = inv(hR);
 
-    for i = 1: sizeX
-        for j = 1 : sizeY
+    for i = 1: size(imOut, 1)
+        for j = 1 : size(imOut, 2)
             realX = i + minX;
             realY = j + minY;
             p = applyDLT(realX, realY, invHL);
-            if p(1) > 0 && p(2) > 0
-                indexX = int32(p(1));
-                indexY = int32(p(2));
-                
-                if indexX < sL(1)-1 && indexY < sL(2)-1
+            if (p(1) > 0 && p(1) < sL(1)-1 && p(2) > 0 && p(2) < sL(2)-1)
+                indexX = int32(p(1))+1;
+                indexY = int32(p(2))+1;
+
+%               TODO passar a double / 255
+%                 imOut(i, j, :) = imOut(i, j, 1) + imL(indexX, indexY, 1);
+                imOut(i, j, :) = imL(indexX, indexY, :);
+%                 imOutPlus(i, j) = imOutPlus(i, j)+1;
 %                     imOut(j, i, :) =  imL(indexY+1, indexX+1, :);
 %                     imOut(j, i, :) = imOut(j, i, :) + imL(indexY+1, indexX+1, :);
                     
-                end
+               
             end
         end
     end
+    
+%     for i = 1: size(imOut, 1)
+%         for j = 1 : size(imOut, 2)
+%             if imOutPlus(i,j) > 1
+%                  imOut(i, j, :) = imOut(i, j, :)/imOutPlus(i,j);
+%             end
+%         end
+%     end
 
 end
 
