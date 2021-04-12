@@ -1,15 +1,15 @@
 function main
     close all,
 
-%     path = "img/ee/";
-%     left = imread(strcat(path, "image006.jpg"));
-%     center = imread(strcat(path, "image007.jpg"));
-%     right = imread(strcat(path, "image008.jpg"));
+    path = "img/ee/";
+    left = imread(strcat(path, "image006.jpg"));
+    center = imread(strcat(path, "image007.jpg"));
+    right = imread(strcat(path, "image008.jpg"));
 
-    path = "img/meves/";
-    left = imread(strcat(path, "3.jpg"));
-    center = imread(strcat(path, "2.jpg"));
-    right = imread(strcat(path, "1.jpg"));
+%     path = "img/meves/";
+%     left = imread(strcat(path, "3.jpg"));
+%     center = imread(strcat(path, "2.jpg"));
+%     right = imread(strcat(path, "1.jpg"));
 
     left = double(left)/255;
     center = double(center)/255;
@@ -21,7 +21,7 @@ function main
 
 end
 
-function [x1, y1] = getPointsImage(img, nPoints, n)
+function [x, y] = getPointsImage(img, nPoints, n)
     
     figure(n),imshow(img)
     enableDefaultInteractivity(gca);
@@ -33,11 +33,12 @@ function [x1, y1] = getPointsImage(img, nPoints, n)
 
     x1=[]; y1=[];
     for j=1:4
+        
         [x1(j),y1(j)]=ginput(1);
+        zoom out;
         figure(n)
         hold on
         plot(x1(j),y1(j),'rx','MarkerSize',20,'LineWidth',3);
-        text(x1(j)-10,y1(j)-50,string(j));
         hold off
     end
 end
@@ -100,7 +101,7 @@ function c = getCornersToH(im, h)
 end
 
 function imOut = getImage(imL, im, imR, nPoints)
-    type = 1;
+    type = 0;
     switch type
         case 0
             [xL, yL] = getPointsImage(imL, nPoints, 1);
