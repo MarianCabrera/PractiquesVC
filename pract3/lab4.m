@@ -2,30 +2,26 @@ function lab4
     close all,
 
     path = "img/ee/";
-    left = imread(strcat(path, "image006.jpg"));
+    left = imread(strcat(path, "image005.jpg"));
     center = imread(strcat(path, "image007.jpg"));
-    right = imread(strcat(path, "image008.jpg"));
+    right = imread(strcat(path, "image009.jpg"));
     
-    left2 = imread(strcat(path, "image005.jpg"));
-    right2 = imread(strcat(path, "image009.jpg"));
+    left2 = imread(strcat(path, "image003.jpg"));
+    right2 = imread(strcat(path, "image011.jpg"));
     
-    left3 = imread(strcat(path, "image004.jpg"));
-    right3 = imread(strcat(path, "image010.jpg"));
+    left3 = imread(strcat(path, "image001.jpg"));
+    right3 = imread(strcat(path, "image013.jpg"));
 
 %     path = "img/meves/";
 %     left = imread(strcat(path, "3.jpg"));
 %     center = imread(strcat(path, "2.jpg"));
 %     right = imread(strcat(path, "1.jpg"));
 
-%     left = double(left)/255;
-%     center = double(center)/255;
-%     right = double(right)/255;
-
     nPoints = 4;
-    imOut = getImage(left, center, right, nPoints);
+    imOut = getImage(imToCil(left), imToCil(center), imToCil(right), nPoints);
     figure(6)
     imshow(uint8(imOut))
-    imOut = getImage(left2, imOut, right2, nPoints);
+    imOut = getImage(imToCil(left2), imToCil(imOut), imToCil(right2), nPoints);
     figure(7)
     imshow(uint8(imOut))
 %     imOut3 = getImage(left3, imOut2, right3, nPoints);
@@ -73,6 +69,19 @@ function [x1, y1, x2, y2] = getSURF(im1, im2)
     y2 = inlierPts2.Location(:,2);
 end
 
+function H = getCilH(x1, y1, x2, y2, points)
+    totalX = 0;
+    totalY = 0;
+    for i=1:points
+        totalX = totalX + (x2(i) - x1(i));
+        totalY = totalY + (y2(i) - y1(i));
+    end
+    totalX = totalX / points;
+    totalY = totalY / points;
+    
+    H = [1 , 0, totalX; 0, 1, totalY; 0, 0, 1]
+end
+
 function H = getDLT(x1, y1, x2, y2, points)
     M = [];
     for i=1:points
@@ -83,16 +92,6 @@ function H = getDLT(x1, y1, x2, y2, points)
     [u,s,v] = svd( M );
     H = reshape( v(:,end), 3, 3 )';
     H = H / H(3,3);
-end
-
-function H = getHforCil(h)
-    H = zeros(3 ,3);
-    H(1, 1) = 1;
-    H(2, 2) = 1;
-    H(3, 3) = 1;
-    
-    H(1, 3) = h(1,3);
-    H(2, 3) = h(2,3);
 end
 
 function p = applyDLT(x, y, H)
@@ -112,20 +111,20 @@ function c = getCornersToH(im, h)
 end
 
 function [xNew, yNew] = plaToCilindre(x, y)
-    s = double(5000); f = s;
+    s = double(2000); f = s;
     xNew = s * atan(double(x) / f);
     yNew = s * (double(y) / (sqrt((double(x)^2) + (f^2))));
 end
 
 function [xNew, yNew] = cilindreToPla(x, y)
-    s = double(5000); f = s;
+    s = double(2000); f = s;
     xNew = f * tan(double(x) / s);
     yNew = f * (double(y) / s) * sec(double(x) / s);
 end
 
 function imROutIn = imToCil(im)
-    centerX = size(im, 2) /2;
-    centerY = size(im, 1) /2;
+    centerX =( size(im, 2)-1) /2;
+    centerY = (size(im, 1)-1) /2;
     cornersCentered = [1-centerX, 1-centerY; size(im, 2)-centerX, 1-centerY; size(im, 2)-centerX, size(im, 1)-centerY; 1-centerX, size(im, 1)-centerY];
     newCornersCentered = zeros(4, 2);
 
@@ -141,15 +140,15 @@ function imROutIn = imToCil(im)
     xplim = xplimCentered + centerX;
     yplim = yplimCentered + centerY;
 
-    imROutIn = uint8(zeros(yplim(2) - yplim(1), xplim(2) - xplim(1), 3));
+    imROutIn = uint8(zeros(yplim(2) - yplim(1)-1, xplim(2) - xplim(1)-1, 3));
 
     newCenterX = size(imROutIn, 2) /2;
     newCenterY = size(imROutIn, 1) /2;
 
-    for i = 1:size(imROutIn, 1)-1
-        for j = 1:size(imROutIn, 2)-1
-            xpCenter = j - newCenterX;
-            ypCenter = i - newCenterY;
+    for i = 1:size(imROutIn, 1)
+        for j = 1:size(imROutIn, 2)
+            xpCenter = j - newCenterX+1;
+            ypCenter = i - newCenterY+1;
 
             [xCenter, yCenter] = cilindreToPla(xpCenter, ypCenter);
             x = int32(xCenter + centerX);
@@ -162,11 +161,8 @@ function imROutIn = imToCil(im)
     end
 end
 
-function imOut = getImage(imL1, im1, imR1, nPoints)
+function imOut = getImage(imL, im, imR, nPoints)
     type = 1;
-    im = imToCil(im1);
-    imL = imToCil(imL1);
-    imR = imToCil(imR1);
     
     switch type
         case 0
@@ -175,15 +171,15 @@ function imOut = getImage(imL1, im1, imR1, nPoints)
             [xR, yR] = getPointsImage(imR, nPoints, 3);
             [xCR, yCR] = getPointsImage(im, nPoints, 4);
             close all,
-            hL = getHforCil(getDLT(xL, yL, xCL, yCL, nPoints));
-            hR = getHforCil(getDLT(xR, yR, xCR, yCR, nPoints));
+            hL = getCilH(xL, yL, xCL, yCL, nPoints);
+            hR = getCilH(xR, yR, xCR, yCR, nPoints);
         case 1
             [xL, yL, xCL, yCL] = getSURF(imL, im);
             [xCR, yCR, xR, yR] = getSURF(im, imR);
             sizeL = size(xL, 1);
             sizeR = size(xR, 1);
-            hL = getHforCil(getDLT(xL, yL, xCL, yCL, sizeL));
-            hR = getHforCil(getDLT(xR, yR, xCR, yCR, sizeR));
+            hL = getCilH(xL, yL, xCL, yCL, sizeL);
+            hR = getCilH(xR, yR, xCR, yCR, sizeR);
     end
   
     cL = getCornersToH(imL, hL);
@@ -203,8 +199,8 @@ function imOut = getImage(imL1, im1, imR1, nPoints)
     sizeY = maxY - minY;
     sizeX = maxX - minX;
     
-    imOut = double(zeros(int32(sizeY), int32(sizeX), 3));
-    imOutPlus = double(zeros(int32(sizeY), int32(sizeX)));
+    imOut = double(zeros(int32(sizeY)-1, int32(sizeX)-1, 3));
+    imOutPlus = double(zeros(int32(sizeY)-1, int32(sizeX)-1));
     imOut(int32((0 - minY) +1) : int32(size(im, 1) + (0 - minY)), int32((0 - minX)+1) : int32(size(im, 2) + (0 - minX)), :) = im(:,:,:);
     imOutPlus(int32((0 - minY) +1) : int32(size(im, 1) + (0 - minY)), int32((0 - minX)+1) : int32(size(im, 2) + (0 - minX))) = 1;
     
@@ -213,8 +209,8 @@ function imOut = getImage(imL1, im1, imR1, nPoints)
     
     for j = 1 : size(imOut, 2)
         for i = 1 : size(imOut, 1)
-            xToH = j + minX;
-            yToH = i + minY;
+            xToH = j + minX+1;
+            yToH = i + minY+1;
             pL = applyDLT(xToH, yToH, invHL);
             pX = int32(pL(1));
             pY = int32(pL(2));
@@ -223,8 +219,8 @@ function imOut = getImage(imL1, im1, imR1, nPoints)
                 imOutPlus(i, j) =  imOutPlus(i, j) + 1;
             end
             pR = applyDLT(xToH, yToH, invHR);
-            pX = int32(pR(1)-1);
-            pY = int32(pR(2)-1);
+            pX = int32(pR(1));
+            pY = int32(pR(2));
             if pX>0 && pX<size(imR, 2) && pY>0 && pY<size(imR, 1)
                 imOut(i, j, :) = double(imOut(i, j, :)) + double(imR(pY, pX, :));
                 imOutPlus(i, j) =  imOutPlus(i, j) + 1;

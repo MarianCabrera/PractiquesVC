@@ -1,6 +1,6 @@
-% clearvars,
-% close all,
-% clc,
+clearvars,
+close all,
+clc,
 
 path = "img/cnm/";
 left = imread(strcat(path, "image011.jpg"));
@@ -17,7 +17,7 @@ cornersCentered = [1-centerX, 1-centerY; size(im, 2)-centerX, 1-centerY; size(im
 newCornersCentered = zeros(4, 2);
 
 for i = 1 : 4
-    [newX, newY] = plaToCilindre(cornersCentered(i,1), cornersCentered(i, 2));
+    [newX, newY] = cilindreToPla(cornersCentered(i,1), cornersCentered(i, 2));
     newCornersCentered(i, 1) = newX;
     newCornersCentered(i, 2) = newY;
 end
@@ -28,17 +28,17 @@ yplimCentered = [floor(min(newCornersCentered(:,2))), ceil(max(newCornersCentere
 xplim = xplimCentered + centerX;
 yplim = yplimCentered + centerY;
 
-imROutIn = uint8(zeros(yplim(2) - yplim(1), xplim(2) - xplim(1), 3));
+imROutIn = uint8(zeros(yplim(2) - yplim(1)+500, xplim(2) - xplim(1)+500, 3));
 
 newCenterX = size(imROutIn, 2) /2;
 newCenterY = size(imROutIn, 1) /2;
 
 for i = 1:size(imROutIn, 1)
     for j = 1:size(imROutIn, 2)
-        xpCenter = j - newCenterX;
-        ypCenter = i - newCenterY;
+        xpCenter = j - newCenterX+1;
+        ypCenter = i - newCenterY+1;
         
-        [xCenter, yCenter] = cilindreToPla(xpCenter, ypCenter);
+        [xCenter, yCenter] = plaToCilindre(xpCenter, ypCenter);
         x = int32(xCenter + centerX);
         y = int32(yCenter + centerY);
         if(x > 0 && x <= size(im,2) && y > 0 && y <= size(im,1))
@@ -51,13 +51,13 @@ end
 imshow(imROutIn)
 
 function [xNew, yNew] = plaToCilindre(x, y)
-    s = double(1000); f = s;
+    s = double(-2000); f = s;
     xNew = s * atan(double(x) / f);
     yNew = s * (double(y) / (sqrt((double(x)^2) + (f^2))));
 end
 
 function [xNew, yNew] = cilindreToPla(x, y)
-    s = double(1000); f = s;
+    s = double(-2000); f = s;
     xNew = f * tan(double(x) / s);
     yNew = f * (double(y) / s) * sec(double(x) / s);
 end
