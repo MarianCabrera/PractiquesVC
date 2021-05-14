@@ -2,9 +2,10 @@ clearvars,
 close all,
 clc,
 
-ima=imread('https://www.ign.es/wms-inspire/pnoa-ma?REQUEST=GetMap&VERSION=1.1.0&SERVICE=WMS&SRS=EPSG:32631&BBOX=-2806.70,4664788.54,-2406.70,4665188.54&WIDTH=1024&HEIGHT=1024&LAYERS=OI.OrthoimageCoverage&STYLES=&FORMAT=JPEG&BGCOLOR=0xFFFFFF&TRANSPARENT=TRUE&EXCEPTION=INIMAGE');
+ima=imread('https://www.ign.es/wms-inspire/pnoa-ma?REQUEST=GetMap&VERSION=1.1.0&SERVICE=WMS&SRS=EPSG:32631&BBOX=-1806.70,4664788.54,-1406.70,4665188.54&WIDTH=1024&HEIGHT=1024&LAYERS=OI.OrthoimageCoverage&STYLES=&FORMAT=JPEG&BGCOLOR=0xFFFFFF&TRANSPARENT=TRUE&EXCEPTION=INIMAGE');
 imshow(ima)
 im = rgb2gray(ima);
+imHSV = rgb2hsv(ima);
 
 nPoints = 100;
 % [arbre, noArbre] = getPointsImage(ima, nPoints);
@@ -41,9 +42,13 @@ testLabels = zeros(nPoints, 1);
 testLabels(1 : 50) = 1;
 testLabels(51: 100) = 0;
 
+descTrain = zeros(nPoints,3);
+descTest = zeros(nPoints,3);
 for i = 1 : nPoints
     descTrain(i, 1:3) = double(ima(test(i, 2), test(i, 1), :));
     descTest(i, 1:3) = double(ima(test(i, 2), test(i, 1), :));
+%     descTrain(i, 4:5) = double(imHSV(test(i, 2), test(i, 1), 2:3));
+%     descTest(i, 4:5) = double(imHSV(test(i, 2), test(i, 1), 2:3));
 end
 % 
 % for i = 1 : size(points,2)
@@ -55,15 +60,15 @@ end
 
 % SVM
 % Mdl = fitcsvm(descTrain,trainLabels);
-% predictLabels = resubPredict(Mdl,descTest);
+% predictLabels = predict(Mdl,descTest);
 
 % NAIVE BAYES
-Mdl = fitcnb(descTrain,trainLabels);
-predictLabels = predict(Mdl,descTest);
+% Mdl = fitcnb(descTrain,trainLabels);
+% predictLabels = predict(Mdl,descTest);
 
 % K-NN
-% Mdl = fitcknn(descTrain,trainLabels,'NumNeighbors',5,'Standardize',1);
-% predictLabels = predict(Mdl,descTest);
+Mdl = fitcknn(descTrain,trainLabels,'NumNeighbors',5,'Standardize',1);
+predictLabels = predict(Mdl,descTest);
 
 cm = confusionchart(testLabels,predictLabels);
 TP = cm.NormalizedValues(1,1);
@@ -71,13 +76,37 @@ FN = cm.NormalizedValues(1,2);
 FP = cm.NormalizedValues(2,1);
 TN = cm.NormalizedValues(2,2);
 
-ACC =(TP + TN) / (50 + 50)
+ACC =(TP + TN) / (50 + 50);
 
-rgbVector = double(reshape(ima,size(ima,1)*size(ima,2),3));
-predictLabels2 = predict(Mdl,rgbVector);
+imageVector = zeros(size(ima,1),size(ima,2),3);
+for i = 1: size(imageVector, 1)
+    for j = 1:size(imageVector,2)
+        imageVector(i,j,1:3) = double(ima(i, j, :));
+%         imageVector(i,j, 4:5) = double(imHSV(i,j, 2:3));
+    end
+end
 
-imNew = reshape(predictLabels2,size(im));
-imshow(imNew)
+imageVector = double(reshape(imageVector,size(imageVector,1)*size(imageVector,2),3));
+predictLabels2 = predict(Mdl,imageVector);
+
+mask = reshape(predictLabels2,size(im));
+figure(1), imshow(mask)
+
+imNewA = ima;
+imNewNA = ima;
+
+for i = 1: size(ima, 1)
+    for j = 1:size(ima,2)
+        if mask(i, j) == 0
+            imNewA(i,j,:) = 0;
+        else
+            imNewNA(i,j,:) = 0;
+        end
+    end
+end
+
+figure(2),imshow(imNewA)
+figure(3),imshow(imNewNA)
 
 function [arbre, noArbre] = getPointsImage(img, nPoints)
     figure(1),imshow(img)
